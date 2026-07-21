@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://dub.co">
-    <img src=".github/assets/banner.svg" alt="dub-rs - Type-safe Rust SDK for Dub.co" />
+    <img src=".github/assets/dub-hero.png" alt="Short Links With Superpowers" width="100%" />
   </a>
 </p>
 
