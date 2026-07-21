@@ -39,7 +39,7 @@ resource "github_repository" "dub_rs" {
   has_discussions = true  # Useful for Q&A and community discussions
   has_projects    = false # Not needed for SDK - simple issue tracking is sufficient
   has_wiki        = false # Documentation lives in the repository
-  
+
   # Merge strategy - optimized for maintainer experience & clean history
   allow_merge_commit     = false # Disabled - prevents merge commits
   allow_squash_merge     = true  # Enabled - squash commits for clean history
@@ -74,15 +74,16 @@ resource "github_repository" "dub_rs" {
 resource "github_branch_protection" "main" {
   repository_id = github_repository.dub_rs.node_id
   pattern       = "main"
-  
+
   enforce_admins            = false # Allow admins to bypass (you as maintainer)
   required_linear_history   = true  # Enforce linear history for clean git log
   require_conversation_resolution = true
-  allows_force_pushes       = false
-  allows_deletions          = false
+  allows_force_pushes       = false # No force pushes to main
+  allows_deletions          = false # No deleting main branch
+  lock_branch               = false # Allow commits (with restrictions)
   
   required_status_checks {
-    strict   = true
+    strict   = true  # Require branches to be up-to-date before merging
     contexts = [
       "test (stable)",
       "test (beta)",
@@ -92,8 +93,9 @@ resource "github_branch_protection" "main" {
   }
 
   required_pull_request_reviews {
-    dismiss_stale_reviews           = true
+    dismiss_stale_reviews           = true  # Re-review needed after new commits
     require_code_owner_reviews      = false # No CODEOWNERS file needed
+    require_last_push_approval      = false # Allow self-merge without re-approval
     required_approving_review_count = 0     # Allow self-merge as maintainer
   }
 }
