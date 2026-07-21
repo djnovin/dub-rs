@@ -75,13 +75,14 @@ resource "github_branch_protection" "main" {
   repository_id = github_repository.dub_rs.node_id
   pattern       = "main"
 
-  enforce_admins            = false # Allow admins to bypass (you as maintainer)
-  required_linear_history   = true  # Enforce linear history for clean git log
+  enforce_admins              = false # Allow admins to bypass (you as maintainer)
+  required_linear_history     = true  # Enforce linear history for clean git log
+  require_signed_commits      = true  # Require GPG/SSH signed commits
   require_conversation_resolution = true
-  allows_force_pushes       = false # No force pushes to main
-  allows_deletions          = false # No deleting main branch
-  lock_branch               = false # Allow commits (with restrictions)
-  
+  allows_force_pushes         = false # No force pushes to main
+  allows_deletions            = false # No deleting main branch
+  lock_branch                 = false # Allow commits (with restrictions)
+
   required_status_checks {
     strict   = true  # Require branches to be up-to-date before merging
     contexts = [

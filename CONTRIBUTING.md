@@ -45,7 +45,12 @@ git checkout -b feature/your-feature-name
 
 3. Add tests for your changes
 
-4. Ensure all checks pass:
+4. **Follow commit conventions** (see [COMMIT_CONVENTIONS.md](.github/COMMIT_CONVENTIONS.md)):
+```bash
+git commit -S -m "feat: add your feature description"
+```
+
+5. Ensure all checks pass:
 ```bash
 make check
 ```
@@ -60,16 +65,26 @@ cargo doc --workspace --no-deps
 
 ### Commit Messages
 
-Use clear, descriptive commit messages:
+**All commits must follow conventional commit format and be signed.**
 
-```
-Add support for XYZ endpoint
+See our detailed [Commit Conventions Guide](.github/COMMIT_CONVENTIONS.md) for:
+- ✅ Conventional commit format
+- ✅ GPG/SSH signing setup
+- ✅ Valid commit examples
+- ✅ Troubleshooting
 
-- Implement XYZ request/response types
-- Add XYZ resource methods
-- Update documentation
-- Add tests
+**Quick Reference:**
+```bash
+# Format: <type>(<scope>): <subject>
+feat: add analytics endpoint
+fix: resolve timeout error
+docs: update API reference
+
+# All commits must be signed (-S flag)
+git commit -S -m "feat: your message"
 ```
+
+**Valid types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 
 ### Pull Requests
 
