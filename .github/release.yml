@@ -1,0 +1,65 @@
+changelog:
+  exclude:
+    labels:
+      - status: wontfix
+      - duplicate
+      - invalid
+    authors:
+      - dependabot
+  
+  categories:
+    - title: 🚀 Features
+      labels:
+        - type: feature
+        - enhancement
+        - type: enhancement
+    
+    - title: 🐛 Bug Fixes
+      labels:
+        - type: bug
+        - bug
+    
+    - title: 📚 Documentation
+      labels:
+        - type: docs
+        - documentation
+    
+    - title: 🔧 Refactoring
+      labels:
+        - type: refactor
+        - refactor
+    
+    - title: ⚡ Performance
+      labels:
+        - type: perf
+        - performance
+    
+    - title: 🧪 Testing
+      labels:
+        - type: test
+        - tests
+    
+    - title: 🏗️ Build & CI
+      labels:
+        - type: build
+        - type: ci
+        - ci
+        - build
+    
+    - title: 🔨 Chores & Maintenance
+      labels:
+        - type: chore
+        - chore
+        - dependencies
+    
+    - title: 💥 Breaking Changes
+      labels:
+        - breaking change
+    
+    - title: 🔒 Security
+      labels:
+        - security
+    
+    - title: Other Changes
+      labels:
+        - "*"

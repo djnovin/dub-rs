@@ -20,7 +20,7 @@ provider "github" {
 variable "github_owner" {
   description = "GitHub username or organization"
   type        = string
-  default     = "novinnoori"
+  default     = "djnovin"
 }
 
 variable "repo_name" {
@@ -47,18 +47,9 @@ resource "github_repository" "dub_rs" {
   allow_auto_merge       = false # Disabled - maintainer controls merges
   delete_branch_on_merge = true  # Enabled - auto-cleanup merged branches
 
-  topics = [
-    "rust",
-    "sdk",
-    "api-client",
-    "dub",
-    "link-shortener",
-    "analytics",
-    "url-shortener",
-    "async",
-    "tokio",
-    "reqwest"
-  ]
+  # Topics will be added manually after repo creation due to GitHub API race condition
+  # topics = ["rust", "sdk", "api-client", "dub", "link-shortener", "analytics", "url-shortener", "async", "tokio", "reqwest"]
+  
   vulnerability_alerts = true
   security_and_analysis {
     secret_scanning {

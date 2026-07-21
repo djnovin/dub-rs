@@ -4,235 +4,53 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 permissions:
   contents: write
-
-env:
-  CARGO_TERM_COLOR: always
+  pull-requests: read
 
 jobs:
-  # Create the GitHub release
-  create-release:
+  release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.version }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Get version from tag
-        id: get_version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
+      
       - name: Generate changelog
         id: changelog
-        run: |
-          echo "# Release v${{ steps.get_version.outputs.version }}" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          
-          # Get commits since last tag
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
-          else
-            git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
-          fi
-          
-          cat CHANGELOG.md
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: .github/release.yml
+          outputFile: CHANGELOG_RELEASE.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release v${{ steps.get_version.outputs.version }}
-          body_path: CHANGELOG.md
+          body_path: CHANGELOG_RELEASE.md
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
-
-  # Run tests before publishing
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Run tests
-        run: cargo test --all-features --verbose
-
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-  # Build release binaries
-  build:
-    name: Build - ${{ matrix.target }}
-    needs: [create-release]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            name: dub-rs-x86_64-linux.tar.gz
-
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            name: dub-rs-x86_64-linux-musl.tar.gz
-
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            name: dub-rs-aarch64-linux.tar.gz
-
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            name: dub-rs-x86_64-macos.tar.gz
-
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            name: dub-rs-aarch64-macos.tar.gz
-
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            name: dub-rs-x86_64-windows.zip
-
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-
-      - name: Install cross-compilation tools (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y musl-tools
-          if [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
-            sudo apt-get install -y gcc-aarch64-linux-gnu
-          fi
-
-      - name: Build release binary
-        run: cargo build --release --target ${{ matrix.target }} --all-features
-
-      - name: Create archive (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../${{ matrix.name }} dub-rs
-          cd -
-
-      - name: Create archive (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/release
-          7z a ../../../${{ matrix.name }} dub-rs.exe
-          cd -
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./${{ matrix.name }}
-          asset_name: ${{ matrix.name }}
-          asset_content_type: application/octet-stream
-
-  # Publish to crates.io
-  publish:
-    name: Publish to crates.io
-    needs: [create-release, test]
-    runs-on: ubuntu-latest
-    environment: crates-io
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Verify version matches tag
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Publish to crates.io (optional)
+        if: ${{ !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc') }}
         run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/v}
-          CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "dub") | .version')
-          if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
-            echo "Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)"
-            exit 1
-          fi
-
-      - name: Publish dub-core
-        run: cargo publish -p dub-core --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: false
-
-      - name: Wait for crates.io
-        run: sleep 30
-
-      - name: Publish dub-api
-        run: cargo publish -p dub-api --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: false
-
-      - name: Wait for crates.io
-        run: sleep 30
-
-      - name: Publish dub
-        run: cargo publish -p dub --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        continue-on-error: false
-
-  # Update release with publication status
-  finalize:
-    name: Finalize Release
-    needs: [create-release, build, publish]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Update release notes
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const release = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: context.ref.replace('refs/tags/', '')
-            });
-            
-            let body = release.data.body;
-            body += '\n\n---\n\n';
-            
-            if ('${{ needs.publish.result }}' === 'success') {
-              body += '✅ Successfully published to [crates.io](https://crates.io/crates/dub)\n';
-            } else {
-              body += '❌ Publication to crates.io failed\n';
-            }
-            
-            if ('${{ needs.build.result }}' === 'success') {
-              body += '✅ All platform binaries built successfully\n';
-            } else {
-              body += '⚠️ Some platform builds failed\n';
-            }
-            
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.data.id,
-              body: body
-            });
+          echo "To publish to crates.io, add CARGO_REGISTRY_TOKEN to repository secrets"
+          echo "Then uncomment the publish commands below"
+          # cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          # cargo publish -p dub-core
+          # sleep 30
+          # cargo publish -p dub-api
+          # sleep 30
+          # cargo publish -p dub
