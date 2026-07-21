@@ -3,7 +3,6 @@
 
 terraform {
   required_version = ">= 1.0"
-  
   required_providers {
     github = {
       source  = "integrations/github"
@@ -35,20 +34,19 @@ resource "github_repository" "dub_rs" {
   name        = var.repo_name
   description = "Complete Rust SDK for the Dub.co API - Type-safe link management, analytics, and conversion tracking"
   homepage_url = "https://dub.co"
-  
   visibility = "public"
-  
   has_issues      = true
   has_discussions = true  # Useful for Q&A and community discussions
   has_projects    = false # Not needed for SDK - simple issue tracking is sufficient
   has_wiki        = false # Documentation lives in the repository
   
-  allow_merge_commit     = true
-  allow_squash_merge     = true
-  allow_rebase_merge     = true
-  allow_auto_merge       = false
-  delete_branch_on_merge = true
-  
+  # Merge strategy - optimized for maintainer experience & clean history
+  allow_merge_commit     = false # Disabled - prevents merge commits
+  allow_squash_merge     = true  # Enabled - squash commits for clean history
+  allow_rebase_merge     = false # Disabled - avoid complexity
+  allow_auto_merge       = false # Disabled - maintainer controls merges
+  delete_branch_on_merge = true  # Enabled - auto-cleanup merged branches
+
   topics = [
     "rust",
     "sdk",
@@ -61,9 +59,7 @@ resource "github_repository" "dub_rs" {
     "tokio",
     "reqwest"
   ]
-  
   vulnerability_alerts = true
-  
   security_and_analysis {
     secret_scanning {
       status = "enabled"
@@ -79,7 +75,11 @@ resource "github_branch_protection" "main" {
   repository_id = github_repository.dub_rs.node_id
   pattern       = "main"
   
-  enforce_admins = false
+  enforce_admins            = false # Allow admins to bypass (you as maintainer)
+  required_linear_history   = true  # Enforce linear history for clean git log
+  require_conversation_resolution = true
+  allows_force_pushes       = false
+  allows_deletions          = false
   
   required_status_checks {
     strict   = true
@@ -90,11 +90,11 @@ resource "github_branch_protection" "main" {
       "fmt"
     ]
   }
-  
+
   required_pull_request_reviews {
     dismiss_stale_reviews           = true
-    require_code_owner_reviews      = false
-    required_approving_review_count = 0
+    require_code_owner_reviews      = false # No CODEOWNERS file needed
+    required_approving_review_count = 0     # Allow self-merge as maintainer
   }
 }
 
