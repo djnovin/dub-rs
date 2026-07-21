@@ -1,0 +1,97 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Build documentation
+        run: |
+          cargo doc --all-features --no-deps --workspace
+        env:
+          RUSTDOCFLAGS: --cfg docsrs
+
+      - name: Add index redirect
+        run: |
+          cat > target/doc/index.html <<EOF
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta http-equiv="refresh" content="0; url=dub/index.html">
+              <title>Redirecting to dub documentation</title>
+            </head>
+            <body>
+              <p>Redirecting to <a href="dub/index.html">dub documentation</a>...</p>
+            </body>
+          </html>
+          EOF
+
+      - name: Create .nojekyll file
+        run: touch target/doc/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./target/doc
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  link-checker:
+    name: Check Documentation Links
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install cargo-deadlinks
+        uses: taiki-e/install-action@cargo-deadlinks
+
+      - name: Build documentation
+        run: cargo doc --all-features --no-deps --workspace
+
+      - name: Check for broken links
+        run: cargo deadlinks --dir target/doc
+        continue-on-error: true

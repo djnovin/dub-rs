@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "crates/dub",
+    "crates/dub-core",
+    "crates/dub-api",
+]
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+chrono = "0.4"
