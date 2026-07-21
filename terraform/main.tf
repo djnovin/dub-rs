@@ -39,10 +39,9 @@ resource "github_repository" "dub_rs" {
   visibility = "public"
   
   has_issues      = true
-  has_discussions = true
-  has_projects    = true
-  has_wiki        = false
-  has_downloads   = true
+  has_discussions = true  # Useful for Q&A and community discussions
+  has_projects    = false # Not needed for SDK - simple issue tracking is sufficient
+  has_wiki        = false # Documentation lives in the repository
   
   allow_merge_commit     = true
   allow_squash_merge     = true
