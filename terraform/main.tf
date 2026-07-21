@@ -89,7 +89,8 @@ resource "github_branch_protection" "main" {
       "test (stable)",
       "test (beta)",
       "clippy",
-      "fmt"
+      "fmt",
+      "Check Commit Messages"  # Conventional commits validation
     ]
   }
 
