@@ -1,6 +1,8 @@
-<a href="https://dub.co">
-  <img alt="dub-rs – Open-source Rust SDK for the Dub.co API" src="https://dub.co/api/og?title=dub-rs&description=Type-safe%20Rust%20SDK%20for%20Dub.co">
-</a>
+<p align="center">
+  <a href="https://dub.co">
+    <img src=".github/assets/banner.svg" alt="dub-rs - Type-safe Rust SDK for Dub.co" />
+  </a>
+</p>
 
 <h3 align="center">dub-rs</h3>
 
@@ -17,14 +19,17 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/djnovin/dub-rs/actions/workflows/test.yml">
-    <img src="https://github.com/djnovin/dub-rs/actions/workflows/test.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/djnovin/dub-rs/actions/workflows/ci.yml">
+    <img src="https://github.com/djnovin/dub-rs/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
   <a href="https://crates.io/crates/dub">
-    <img src="https://img.shields.io/crates/v/dub.svg" alt="Crates.io" />
+    <img src="https://img.shields.io/crates/v/dub.svg?style=flat&colorA=000000&colorB=000000" alt="Crates.io" />
   </a>
   <a href="https://github.com/djnovin/dub-rs/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/djnovin/dub-rs?label=license&logo=github&color=f80&logoColor=fff" alt="License" />
+    <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT License" />
+  </a>
+  <a href="https://docs.rs/dub">
+    <img src="https://img.shields.io/docsrs/dub?style=flat&colorA=000000&colorB=000000" alt="Docs.rs" />
   </a>
 </p>
 
